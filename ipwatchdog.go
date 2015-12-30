@@ -18,7 +18,7 @@ func main() {
 	flag.StringVar(&server_port, "server_port", "587", "Mail server port.")
 	flag.StringVar(&user, "user", "", "Username @ Mail server. If not specified the sender email address is used.")
 	flag.StringVar(&passwd, "passwd", "", "Password @ Mail server.")
-	flag.StringVar(&schedule, "schedule", "@every 30min", "Schedule defining the time interval between each IP check.")
+	flag.StringVar(&schedule, "schedule", "@every 30m", "Schedule defining the time interval between each IP check.")
 	flag.StringVar(&checkip_url, "checkip_url", "http://checkip.amazonaws.com", "Check IP API URL.")
 	flag.StringVar(&callback_url, "callback_url", "", "URL to hit when IP changes. If not set, callback won't be performed.")
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
