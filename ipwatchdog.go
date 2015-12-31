@@ -9,25 +9,46 @@ import (
 	"net/smtp"
 )
 
-var lastIp, from, to, server_host, server_port, user, passwd, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header string
+var lastIp, email_sender_address, email_recipient_address, email_server_host, email_server_port, email_server_username, email_server_password, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header string
+var email_alert_on, callback_on bool
 
 func main() {
-	flag.StringVar(&from, "from", "", "Sender email address, e.g. user@domain.com")
-	flag.StringVar(&to, "to", "", "Recipient email address, e.g. recipient@domain.com.")
-	flag.StringVar(&server_host, "server_host", "smtp.gmail.com", "Mail server hostname.")
-	flag.StringVar(&server_port, "server_port", "587", "Mail server port.")
-	flag.StringVar(&user, "user", "", "Username @ Mail server. If not specified the sender email address is used.")
-	flag.StringVar(&passwd, "passwd", "", "Password @ Mail server.")
-	flag.StringVar(&schedule, "schedule", "@every 30m", "Schedule defining the time interval between each IP check.")
+	flag.StringVar(&email_sender_address, "email_sender_address", "", "Sender email address, e.g. user@domain.com")
+	flag.StringVar(&email_recipient_address, "email_recipient_address", "", "Recipient email address, e.g. recipient@domain.com.")
+	flag.StringVar(&email_server_host, "email_server_host", "smtp.gmail.com", "Mail server hostname.")
+	flag.StringVar(&email_server_port, "email_server_port", "587", "Mail server port.")
+	flag.StringVar(&email_server_username, "email_server_username", "", "Username @ Mail server. If not specified the sender email address is used.")
+	flag.StringVar(&email_server_password, "email_server_password", "", "Password @ Mail server.")
+	flag.StringVar(&schedule, "schedule", "@every 30min", "Schedule defining the time interval between each IP check.")
 	flag.StringVar(&checkip_url, "checkip_url", "http://checkip.amazonaws.com", "Check IP API URL.")
 	flag.StringVar(&callback_url, "callback_url", "", "URL to hit when IP changes. If not set, callback won't be performed.")
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
 	flag.StringVar(&callback_auth_header, "callback_auth_header", "", "Authorization header to be used in callback.")
+	flag.BoolVar(&email_alert_on, "email_alert_on", false, "Boolean flag enabling email alerts for IP changes.")
+	flag.BoolVar(&callback_on, "email_alert_on", false, "Boolean flag enabling HTTP callback for IP changes.")
 	flag.Parse()
-	if from == "" || to == "" {
-		panic("-from and -to parameters are required.")
+	if email_alert_on == false && callback_on == false {
+		panic("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
+	} 
+	if email_alert_on == true {
+		validateEmailSettings()
+	} 
+	if callback_on == true {
+		validateCallbackSettings()
 	}
 	initialize()
+}
+
+func validateEmailSettings() {
+	if email_sender_address == "" || email_recipient_address == "" {
+		panic("You need to define \"email_sender_address\" and \"email_recipient_address\" to enable email alerts!")
+	} 
+}
+
+func validateCallbackSettings() {
+	if callback_url == "" {
+		panic("You need to define \"callback_url\" to enable HTTP callbacks")
+	}
 }
 
 func initialize() {
@@ -59,9 +80,12 @@ func checkIp() {
 }
 
 func sendMail(message []byte) {
-	auth := smtp.PlainAuth("", from, passwd, server_host)
-	fmt.Println("Sending mail to: " + to)
-	err := smtp.SendMail(server_host+":"+server_port, auth, from, []string{to}, message)
+	if email_server_username == "" {
+		email_server_username = email_sender_address
+	}
+	auth := smtp.PlainAuth("", email_sender_username, email_server_password, email_server_host)
+	fmt.Println("Sending mail to: " + email_recipient_address)
+	err := smtp.SendMail(email_server_host+":"+email_server_port, auth, email_sender_address, []string{email_recipient_address}, message)
 	if err != nil {
 		fmt.Println(err)
 	}
