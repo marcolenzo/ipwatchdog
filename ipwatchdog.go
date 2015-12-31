@@ -20,7 +20,7 @@ func main() {
 	flag.StringVar(&email_server_port, "email_server_port", "587", "Mail server port.")
 	flag.StringVar(&email_server_username, "email_server_username", "", "Username @ Mail server. If not specified the sender email address is used.")
 	flag.StringVar(&email_server_password, "email_server_password", "", "Password @ Mail server.")
-	flag.StringVar(&schedule, "schedule", "@every 30min", "Schedule defining the time interval between each IP check.")
+	flag.StringVar(&schedule, "schedule", "@every 30m", "Schedule defining the time interval between each IP check.")
 	flag.StringVar(&checkip_url, "checkip_url", "http://checkip.amazonaws.com", "Check IP API URL.")
 	flag.StringVar(&callback_url, "callback_url", "", "URL to hit when IP changes. If not set, callback won't be performed.")
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
@@ -31,10 +31,10 @@ func main() {
 	if email_alert_on == false && callback_on == false {
 		fmt.Println("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
 		os.Exit(1)
-	} 
+	}
 	if email_alert_on == true {
 		validateEmailSettings()
-	} 
+	}
 	if callback_on == true {
 		validateCallbackSettings()
 	}
@@ -45,7 +45,7 @@ func validateEmailSettings() {
 	if email_sender_address == "" || email_recipient_address == "" {
 		fmt.Println("You need to define \"email_sender_address\" and \"email_recipient_address\" to enable email alerts!")
 		os.Exit(1)
-	} 
+	}
 }
 
 func validateCallbackSettings() {
@@ -58,6 +58,8 @@ func validateCallbackSettings() {
 func initialize() {
 	c := cron.New()
 	c.AddFunc(schedule, func() { checkIp() })
+	// Run immediately once before cron takes over
+	checkIp()
 	c.Start()
 	fmt.Println("IP Watchdog Cron started...")
 	select {}
