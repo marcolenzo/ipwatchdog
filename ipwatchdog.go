@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/smtp"
+	"os"
 )
 
 var lastIp, email_sender_address, email_recipient_address, email_server_host, email_server_port, email_server_username, email_server_password, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header string
@@ -25,10 +26,11 @@ func main() {
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
 	flag.StringVar(&callback_auth_header, "callback_auth_header", "", "Authorization header to be used in callback.")
 	flag.BoolVar(&email_alert_on, "email_alert_on", false, "Boolean flag enabling email alerts for IP changes.")
-	flag.BoolVar(&callback_on, "email_alert_on", false, "Boolean flag enabling HTTP callback for IP changes.")
+	flag.BoolVar(&callback_on, "callback_on", false, "Boolean flag enabling HTTP callback for IP changes.")
 	flag.Parse()
 	if email_alert_on == false && callback_on == false {
-		panic("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
+		fmt.Println("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
+		os.Exit(1)
 	} 
 	if email_alert_on == true {
 		validateEmailSettings()
@@ -41,13 +43,15 @@ func main() {
 
 func validateEmailSettings() {
 	if email_sender_address == "" || email_recipient_address == "" {
-		panic("You need to define \"email_sender_address\" and \"email_recipient_address\" to enable email alerts!")
+		fmt.Println("You need to define \"email_sender_address\" and \"email_recipient_address\" to enable email alerts!")
+		os.Exit(1)
 	} 
 }
 
 func validateCallbackSettings() {
 	if callback_url == "" {
-		panic("You need to define \"callback_url\" to enable HTTP callbacks")
+		fmt.Println("You need to define \"callback_url\" to enable HTTP callbacks")
+		os.Exit(1)
 	}
 }
 
