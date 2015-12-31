@@ -83,7 +83,7 @@ func sendMail(message []byte) {
 	if email_server_username == "" {
 		email_server_username = email_sender_address
 	}
-	auth := smtp.PlainAuth("", email_sender_username, email_server_password, email_server_host)
+	auth := smtp.PlainAuth("", email_server_username, email_server_password, email_server_host)
 	fmt.Println("Sending mail to: " + email_recipient_address)
 	err := smtp.SendMail(email_server_host+":"+email_server_port, auth, email_sender_address, []string{email_recipient_address}, message)
 	if err != nil {
