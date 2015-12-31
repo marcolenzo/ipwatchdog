@@ -10,6 +10,7 @@ import (
 )
 
 var lastIp, email_sender_address, email_recipient_address, email_server_host, email_server_port, email_server_username, email_server_password, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header string
+var email_alert_on, callback_on bool
 
 func main() {
 	flag.StringVar(&email_sender_address, "email_sender_address", "", "Sender email address, e.g. user@domain.com")
@@ -23,8 +24,31 @@ func main() {
 	flag.StringVar(&callback_url, "callback_url", "", "URL to hit when IP changes. If not set, callback won't be performed.")
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
 	flag.StringVar(&callback_auth_header, "callback_auth_header", "", "Authorization header to be used in callback.")
+	flag.BoolVar(&email_alert_on, "email_alert_on", false, "Boolean flag enabling email alerts for IP changes.")
+	flag.BoolVar(&callback_on, "email_alert_on", false, "Boolean flag enabling HTTP callback for IP changes.")
 	flag.Parse()
+	if email_alert_on == false && callback_on == false {
+		panic("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
+	} 
+	if email_alert_on == true {
+		validateEmailSettings()
+	} 
+	if callback_on == true {
+		validateCallbackSettings()
+	}
 	initialize()
+}
+
+func validateEmailSettings() {
+	if email_sender_address == "" || email_recipient_address == "" {
+		panic("You need to define \"email_sender_address\" and \"email_recipient_address\" to enable email alerts!")
+	} 
+}
+
+func validateCallbackSettings() {
+	if callback_url == "" {
+		panic("You need to define \"callback_url\" to enable HTTP callbacks")
+	}
 }
 
 func initialize() {
