@@ -69,6 +69,7 @@ func checkIp() {
 	resp, err := http.Get(checkip_url)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
