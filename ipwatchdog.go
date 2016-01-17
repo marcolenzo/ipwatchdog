@@ -14,6 +14,7 @@ var lastIp, email_sender_address, email_recipient_address, email_server_host, em
 var email_alert_on, callback_on bool
 
 func main() {
+	// TODO modularize this program according to Go best practices.
 	flag.StringVar(&email_sender_address, "email_sender_address", "", "Sender email address, e.g. user@domain.com")
 	flag.StringVar(&email_recipient_address, "email_recipient_address", "", "Recipient email address, e.g. recipient@domain.com.")
 	flag.StringVar(&email_server_host, "email_server_host", "smtp.gmail.com", "Mail server hostname.")
