@@ -72,7 +72,7 @@ func loadCredentials() {
 		fmt.Println(err)
 		return
 	}
-	callback_auth_header, _ = fReader.ReadString('\n')
+	callback_auth_header, err = fReader.ReadString('\n')
 	if err != nil {
 		fmt.Println(err)
 		return
