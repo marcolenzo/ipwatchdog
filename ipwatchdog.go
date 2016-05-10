@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"github.com/robfig/cron"
@@ -11,7 +12,8 @@ import (
 )
 
 var lastIp, email_sender_address, email_recipient_address, email_server_host, email_server_port, email_server_username, email_server_password, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header string
-var email_alert_on, callback_on bool
+var email_alert_on, callback_on, schedule_callback_on bool
+var reader = bufio.NewReader(os.Stdin)
 
 func main() {
 	// TODO modularize this program according to Go best practices.
@@ -26,18 +28,27 @@ func main() {
 	flag.StringVar(&callback_url, "callback_url", "", "URL to hit when IP changes. If not set, callback won't be performed.")
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
 	flag.StringVar(&callback_auth_header, "callback_auth_header", "", "Authorization header to be used in callback.")
-	flag.BoolVar(&email_alert_on, "email_alert_on", false, "Boolean flag enabling email alerts for IP changes.")
-	flag.BoolVar(&callback_on, "callback_on", false, "Boolean flag enabling HTTP callback for IP changes.")
+	flag.BoolVar(&schedule_callback_on, "schedule_callback_on", true, "Callback is invoked at the scheduling interval even if IP did not change")
 	flag.Parse()
+	if email_sender_address != "" || email_recipient_address != "" || email_server_username != "" || email_server_password != "" {
+		email_alert_on = true
+		validateEmailSettings()
+	}
+	if callback_url != "" {
+		callback_on = true
+		validateCallbackSettings()
+	}
 	if email_alert_on == false && callback_on == false {
 		fmt.Println("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
 		os.Exit(1)
 	}
-	if email_alert_on == true {
-		validateEmailSettings()
+	if email_alert_on == true && email_server_password == "" {
+		fmt.Println("Enter server password: ")
+		email_server_password, _ = reader.ReadString('\n')
 	}
-	if callback_on == true {
-		validateCallbackSettings()
+	if callback_on == true && callback_auth_header == "" {
+		fmt.Println("Enter callback authorization header: ")
+		callback_auth_header, _ = reader.ReadString('\n')
 	}
 	initialize()
 }
@@ -80,11 +91,14 @@ func checkIp() {
 		message := "IP has changed! Previous was: " + lastIp
 		fmt.Println(message)
 		sendMail([]byte("IP has changed! New IP is " + currentIp + " while previous IP was " + lastIp))
-		if callback_url != "" {
+		if callback_on && !schedule_callback_on {
 			callback(currentIp)
 		}
 	}
 	lastIp = currentIp
+	if callback_on && schedule_callback_on {
+		callback(currentIp)
+	}
 }
 
 func sendMail(message []byte) {
@@ -113,7 +127,6 @@ func callback(ip string) {
 		return
 	}
 	if callback_auth_header != "" {
-		fmt.Println("Setting Authorization Header to: " + callback_auth_header)
 		req.Header.Add("Authorization", callback_auth_header)
 	}
 	resp, err := client.Do(req)
@@ -122,4 +135,6 @@ func callback(ip string) {
 		return
 	}
 	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	fmt.Println("Server replied: " + string(body))
 }
