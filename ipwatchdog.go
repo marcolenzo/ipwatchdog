@@ -11,7 +11,7 @@ import (
 	"os"
 )
 
-var lastIp, email_sender_address, email_recipient_address, email_server_host, email_server_port, email_server_username, email_server_password, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header string
+var lastIp, email_sender_address, email_recipient_address, email_server_host, email_server_port, email_server_username, email_server_password, schedule, checkip_url, callback_url, callback_ip_param, callback_auth_header, credentials_file_path string
 var email_alert_on, callback_on, schedule_callback_on bool
 var reader = bufio.NewReader(os.Stdin)
 
@@ -28,6 +28,7 @@ func main() {
 	flag.StringVar(&callback_url, "callback_url", "", "URL to hit when IP changes. If not set, callback won't be performed.")
 	flag.StringVar(&callback_ip_param, "callback_ip_param", "", "Query parameter to be used to communicate new IP. If left empty IP won't be set.")
 	flag.StringVar(&callback_auth_header, "callback_auth_header", "", "Authorization header to be used in callback.")
+	flag.StringVar(&credentials_file_path, "credentials_file_path", "/root/go/bin/.ipwatchdog", "Authorization header to be used in callback.")
 	flag.BoolVar(&schedule_callback_on, "schedule_callback_on", true, "Callback is invoked at the scheduling interval even if IP did not change")
 	flag.Parse()
 	if email_sender_address != "" || email_recipient_address != "" || email_server_username != "" || email_server_password != "" {
@@ -61,7 +62,7 @@ func main() {
 }
 
 func loadCredentials() {
-	f, err := os.Open(".ipwatchdog")
+	f, err := os.Open(credentials_file_path)
 	 if err != nil {
 		fmt.Println(err)
 		return
@@ -84,7 +85,7 @@ func persistCredentials() {
 		email_server_password = "\n"
 	}
 	s := []byte(email_server_password + callback_auth_header);
-    err := ioutil.WriteFile(".ipwatchdog", s, 0600)
+    err := ioutil.WriteFile(credentials_file_path, s, 0600)
     if err != nil {
 		fmt.Println(err)
 		return
