@@ -38,10 +38,15 @@ func main() {
 		callback_on = true
 		validateCallbackSettings()
 	}
+	// Try to parse credentials file
+
 	if email_alert_on == false && callback_on == false {
 		fmt.Println("Both \"email_alert_on\" and \"callback_on\" are set to false. Exiting...")
 		os.Exit(1)
 	}
+
+	loadCredentials()
+	
 	if email_alert_on == true && email_server_password == "" {
 		fmt.Println("Enter server password: ")
 		email_server_password, _ = reader.ReadString('\n')
@@ -50,7 +55,40 @@ func main() {
 		fmt.Println("Enter callback authorization header: ")
 		callback_auth_header, _ = reader.ReadString('\n')
 	}
+	persistCredentials()
+	
 	initialize()
+}
+
+func loadCredentials() {
+	f, err := os.Open(".ipwatchdog")
+	 if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fReader := bufio.NewReader(f);
+	email_server_password, err = fReader.ReadString('\n')
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	callback_auth_header, _ = fReader.ReadString('\n')
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+}
+
+func persistCredentials() {
+	if email_server_password == "" {
+		email_server_password = "\n"
+	}
+	s := []byte(email_server_password + callback_auth_header);
+    err := ioutil.WriteFile(".ipwatchdog", s, 0600)
+    if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
 
 func validateEmailSettings() {
